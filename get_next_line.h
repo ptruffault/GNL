@@ -9,6 +9,16 @@
 #include <fcntl.h>
 #include <string.h>
 #include <stdio.h>
+
+typedef struct 			s_list
+{
+	int 		fd;
+	char 		*text;
+	int		nb_of_file;
+	struct s_list 	*next;
+	struct s_list 	*prev;
+}				t_list;
+
 void 	*ft_memchr(const void *s, int c, size_t n);
 void	ft_putstr(const char *str);
 char	*ft_strnew(int len);
