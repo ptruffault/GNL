@@ -1,39 +1,76 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   get_next_line.c                                    :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: ptruffau <marvin@42.fr>                    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2018/01/12 15:43:08 by ptruffau          #+#    #+#             */
+/*   Updated: 2018/01/14 17:21:24 by ptruffau         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "get_next_line.h"
 
-char	*feed_that_buff(int const fd, char *buff, int *ret)
+char	*joinstr(char *s1, char *s2)
 {
-	char	tmp[BUFF_SIZE + 1];
-	char	*tmp2;
+	int		len1;
+	int		len2;
+	char	*result;
 
-	*ret = read(fd, tmp, BUFF_SIZE);
-	tmp[*ret] = '\0';
-	tmp2 = buff;
-	buff = ft_strjoin(buff, tmp);
-	ft_strdel(&tmp2);
-	return (buff);
+	len1 = (s1) ? ft_strlen(s1) : 0;
+	len2 = ft_strlen(s2);
+	result = ft_strnew(len1 + len2);
+	if (result)
+	{
+		if (s1)
+		{
+			ft_strncpy(result, s1, len1);
+			ft_strdel(&s1);
+		}
+		ft_strncpy(result + len1, s2, len2);
+	}
+	return (result);
 }
 
-int		get_next_line(int const fd, char ** line)
+int		ft_check_line(char **strbuff, char **line)
 {
-	static char		*buff = NULL;
-	int				ret;
-	char			*str;
+	char	*lim;
 
-	if (!line || fd < 0)
-		return (-1);
-	ret = 1;
-	if (!buff)
-		buff = ft_strnew(0);
-	while (ret > 0)
+	lim = ft_strchr(*strbuff, '\n');
+	if (lim)
 	{
-		if ((str = ft_strchr(buff, '\n')) != NULL)
-		{
-			*str = '\0';
-			*line = ft_strdup(buff);
-			ft_memmove(buff, str + 1, ft_strlen(str + 1) + 1);
-			return (1);
-		}
-		buff = feed_that_buff(fd, buff, &ret);
+		*line = ft_strsub(*strbuff, 0, lim - *strbuff);
+		ft_strcpy(*strbuff, lim + 1);
+		return (1);
 	}
-	return (ret);
+	return (0);
+}
+
+int		get_next_line(const int fd, char **line)
+{
+	char		buff[BUFF_SIZE + 1];
+	int			ret;
+	static char	*strbuff;
+
+	if (strbuff && ft_check_line(&strbuff, line))
+		return (1);
+	while ((ret = read(fd, buff, BUFF_SIZE)) > 0)
+	{
+		buff[ret] = '\0';
+		strbuff = joinstr(strbuff, buff);
+		if (ft_check_line(&strbuff, line))
+			return (1);
+	}
+	if (ret < 0)
+		return (-1);
+	if (strbuff && *strbuff)
+	{
+		*line = ft_strdup(strbuff);
+		ft_strdel(&strbuff);
+		return (1);
+	}
+	if (strbuff)
+		ft_strdel(&strbuff);
+	return (0);
 }
